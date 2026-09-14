@@ -1,0 +1,100 @@
+@page "/Libros/Index"
+@inject LibrosService librosService
+@rendermode InteractiveServer
+
+<PageTitle>Consulta de Libros</PageTitle>
+
+<div class="container">
+    <div class="card shadow-lg">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title m-0">Consulta de Libros</h5>
+            <a href="/Libro/Create" class="btn btn-primary"><span class="bi bi-plus-lg"></span> Crear</a>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Filtrar por</label>
+                    <select class="form-select" @bind="filtro">
+                        <option value="0">Elija una opción</option>
+                        <option value="1">LibroId</option>
+                        <option value="2">Título</option>
+                        <option value="3">Autor</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Búsqueda</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Buscar" @bind="criterio" />
+                        <button class="btn btn-outline-secondary" type="button" @onclick="Buscar">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>LibroId</th>
+                        <th>Título</th>
+                        <th>Año Publicación</th>
+                        <th>Opciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var libro in listaLibros)
+                    {
+                        <tr>
+                            <td>@libro.LibroId</td>
+                            <td>@libro.Titulo</td>
+                            <td>@libro.AnoPublicacion</td>
+                            <td>
+                                <a href="/Libro/Edit/@libro.LibroId" class="btn btn-sm btn-outline-primary bi bi-pencil-square"></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <label>Cantidad: @listaLibros.Count</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Libros> listaLibros { get; set; } = new List<Libros>();
+    public string filtro { get; set; } = "0";
+    public string criterio { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaLibros = await librosService.Listar(l => true);
+    }
+
+    public async Task Buscar()
+    {
+        if (string.IsNullOrWhiteSpace(criterio))
+        {
+            listaLibros = await librosService.Listar(l => true);
+            return;
+        }
+
+        if (filtro == "1" && int.TryParse(criterio, out int id))
+        {
+            listaLibros = await librosService.Listar(l => l.LibroId == id);
+        }
+        else if (filtro == "2")
+        {
+            listaLibros = await librosService.Listar(l => l.Titulo.ToLower().Contains(criterio.ToLower()));
+        }
+        else if (filtro == "3")
+        {
+            listaLibros = await librosService.Listar(l => l.Autor.ToLower().Contains(criterio.ToLower()));
+        }
+        else
+        {
+            listaLibros = await librosService.Listar(l => true);
+        }
+    }
+}
